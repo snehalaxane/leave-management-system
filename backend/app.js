@@ -6,6 +6,7 @@ require("dotenv").config();
 require("./config/prisma");
 
 const authRoutes = require("./routes/authRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/employees", employeeRoutes);
 
 module.exports = app;
