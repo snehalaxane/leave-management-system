@@ -43,8 +43,23 @@ const getLeaveById = async (req, res) => {
   }
 };
 
+const updateLeave = async (req, res) => {
+  try {
+    const leave = await leaveService.updateLeave(
+      req.user.id,
+      req.params.id,
+      req.body,
+    );
+
+    return successResponse(res, "Leave updated successfully", leave);
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
 module.exports = {
   applyLeave,
   getLeaveHistory,
   getLeaveById,
+  updateLeave,
 };

@@ -29,4 +29,12 @@ router.get(
   leaveController.getLeaveById,
 );
 
+router.put(
+  "/:id",
+  authenticate,
+  authorize("EMPLOYEE"),
+  applyLeaveValidator,
+  leaveController.updateLeave,
+);
+
 module.exports = router;

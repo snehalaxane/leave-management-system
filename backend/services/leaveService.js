@@ -76,8 +76,46 @@ const getLeaveById = async (employeeId, leaveId) => {
   return leave;
 };
 
+const updateLeave = async (employeeId, leaveId, leaveData) => {
+  const leave = await prisma.leaveRequest.findFirst({
+    where: {
+      id: Number(leaveId),
+      employeeId,
+    },
+  });
+
+  if (!leave) {
+    throw new Error("Leave request not found");
+  }
+
+  if (leave.status !== "PENDING") {
+    throw new Error("Only pending leave requests can be updated");
+  }
+
+  const { leaveType, startDate, endDate, reason } = leaveData;
+
+  if (new Date(startDate) > new Date(endDate)) {
+    throw new Error("Start date cannot be after end date");
+  }
+
+  const updatedLeave = await prisma.leaveRequest.update({
+    where: {
+      id: Number(leaveId),
+    },
+    data: {
+      leaveType,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      reason,
+    },
+  });
+
+  return updatedLeave;
+};
+
 module.exports = {
   applyLeave,
   getLeaveHistory,
   getLeaveById,
+  updateLeave,
 };
