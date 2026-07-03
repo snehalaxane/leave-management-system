@@ -30,6 +30,54 @@ const applyLeave = async (employeeId, leaveData) => {
   return leave;
 };
 
+const getLeaveHistory = async (employeeId, filters) => {
+  const { status, leaveType, search } = filters;
+
+  const where = {
+    employeeId,
+  };
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (leaveType) {
+    where.leaveType = leaveType;
+  }
+
+  if (search) {
+    where.reason = {
+      contains: search,
+    };
+  }
+
+  const leaves = await prisma.leaveRequest.findMany({
+    where,
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return leaves;
+};
+
+const getLeaveById = async (employeeId, leaveId) => {
+  const leave = await prisma.leaveRequest.findFirst({
+    where: {
+      id: Number(leaveId),
+      employeeId,
+    },
+  });
+
+  if (!leave) {
+    throw new Error("Leave request not found");
+  }
+
+  return leave;
+};
+
 module.exports = {
   applyLeave,
+  getLeaveHistory,
+  getLeaveById,
 };
