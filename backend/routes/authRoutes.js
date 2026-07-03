@@ -1,12 +1,9 @@
 const express = require("express");
-
 const router = express.Router();
 
-router.get("/test", (req, res) => {
-  res.json({
-    success: true,
-    message: "Authentication Route Working",
-  });
-});
+const authController = require("../controllers/authController");
+const { loginValidator } = require("../validators/authValidator");
+
+router.post("/login", loginValidator, authController.login);
 
 module.exports = router;

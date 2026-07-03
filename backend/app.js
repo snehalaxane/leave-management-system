@@ -3,7 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 // Database Connection
-require("./config/db");
+require("./config/prisma");
 
 const authRoutes = require("./routes/authRoutes");
 
