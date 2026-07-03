@@ -102,8 +102,37 @@ const approveLeave = async (leaveId) => {
   return updatedLeave;
 };
 
+const rejectLeave = async (leaveId, managerComments) => {
+  const leave = await prisma.leaveRequest.findUnique({
+    where: {
+      id: Number(leaveId),
+    },
+  });
+
+  if (!leave) {
+    throw new Error("Leave request not found");
+  }
+
+  if (leave.status !== "PENDING") {
+    throw new Error("Leave request has already been processed");
+  }
+
+  const updatedLeave = await prisma.leaveRequest.update({
+    where: {
+      id: Number(leaveId),
+    },
+    data: {
+      status: "REJECTED",
+      managerComments: managerComments || "Rejected",
+    },
+  });
+
+  return updatedLeave;
+};
+
 module.exports = {
   getDashboard,
   getPendingLeaves,
   approveLeave,
+  rejectLeave,
 };

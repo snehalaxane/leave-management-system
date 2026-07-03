@@ -52,6 +52,71 @@ const getDashboard = async (employeeId) => {
   };
 };
 
+const getEmployees = async (searchQuery) => {
+  let whereClause = {
+    role: "EMPLOYEE",
+  };
+
+  if (searchQuery) {
+    whereClause = {
+      ...whereClause,
+      OR: [
+        { name: { contains: searchQuery } },
+        { email: { contains: searchQuery } },
+        { employeeCode: { contains: searchQuery } },
+      ],
+    };
+  }
+
+  const employees = await prisma.employee.findMany({
+    where: whereClause,
+    select: {
+      id: true,
+      employeeCode: true,
+      name: true,
+      email: true,
+      department: true,
+      role: true,
+      createdAt: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  return employees;
+};
+
+const getEmployeeById = async (employeeId) => {
+  const employee = await prisma.employee.findUnique({
+    where: {
+      id: Number(employeeId),
+    },
+    select: {
+      id: true,
+      employeeCode: true,
+      name: true,
+      email: true,
+      department: true,
+      role: true,
+      createdAt: true,
+      leaveRequests: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
+  });
+
+  if (!employee) {
+    throw new Error("Employee not found");
+  }
+
+  return employee;
+};
+
 module.exports = {
   getDashboard,
+  getEmployees,
+  getEmployeeById,
 };

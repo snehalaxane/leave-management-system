@@ -27,4 +27,11 @@ router.put(
   managerController.approveLeave,
 );
 
+router.put(
+  "/leaves/:id/reject",
+  authenticate,
+  authorize("MANAGER"),
+  managerController.rejectLeave,
+);
+
 module.exports = router;

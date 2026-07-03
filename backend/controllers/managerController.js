@@ -39,8 +39,24 @@ const approveLeave = async (req, res) => {
   }
 };
 
+const rejectLeave = async (req, res) => {
+  try {
+    const { managerComments } = req.body;
+
+    const leave = await managerService.rejectLeave(
+      req.params.id,
+      managerComments,
+    );
+
+    return successResponse(res, "Leave rejected successfully", leave);
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
 module.exports = {
   getDashboard,
   getPendingLeaves,
   approveLeave,
+  rejectLeave,
 };

@@ -13,4 +13,16 @@ router.get(
   employeeController.getDashboard,
 );
 
+router.get(
+  "/",
+  authenticate,
+  employeeController.getEmployees,
+);
+
+router.get(
+  "/:id",
+  authenticate,
+  employeeController.getEmployeeById,
+);
+
 module.exports = router;
