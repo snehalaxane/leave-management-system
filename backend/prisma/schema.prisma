@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id             Int              @id @default(autoincrement())
+  employee_code  String           @unique(map: "employee_code") @db.VarChar(20)
+  name           String           @db.VarChar(100)
+  email          String           @unique(map: "email") @db.VarChar(100)
+  password       String           @db.VarChar(255)
+  department     String?          @db.VarChar(100)
+  role           employees_role
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?        @default(now()) @db.Timestamp(0)
+  leave_requests leave_requests[]
+
+  @@index([email], map: "idx_employee_email")
+}
+
+model LeaveRequest {
+  id               Int                       @id @default(autoincrement())
+  employee_id      Int
+  leave_type       leave_requests_leave_type
+  start_date       DateTime                  @db.Date
+  end_date         DateTime                  @db.Date
+  reason           String                    @db.Text
+  status           leave_requests_status?    @default(PENDING)
+  manager_comments String?                   @db.Text
+  created_at       DateTime?                 @default(now()) @db.Timestamp(0)
+  updated_at       DateTime?                 @default(now()) @db.Timestamp(0)
+  employees        employees                 @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_employee")
+
+  @@index([employee_id], map: "idx_leave_employee")
+  @@index([status], map: "idx_leave_status")
+}
+
+enum leave_requests_leave_type {
+  CASUAL
+  SICK
+  EARNED
+  WFH
+}
+
+enum employees_role {
+  EMPLOYEE
+  MANAGER
+}
+
+enum leave_requests_status {
+  PENDING
+  APPROVED
+  REJECTED
+}

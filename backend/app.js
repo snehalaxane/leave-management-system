@@ -5,6 +5,8 @@ require("dotenv").config();
 // Database Connection
 require("./config/db");
 
+const authRoutes = require("./routes/authRoutes");
+
 const app = express();
 
 app.use(cors());
@@ -16,5 +18,7 @@ app.get("/", (req, res) => {
         message: "Leave Management API Running"
     });
 });
+
+app.use("/api/auth", authRoutes);
 
 module.exports = app;
