@@ -57,9 +57,20 @@ const updateLeave = async (req, res) => {
   }
 };
 
+const cancelLeave = async (req, res) => {
+  try {
+    await leaveService.cancelLeave(req.user.id, req.params.id);
+
+    return successResponse(res, "Leave request cancelled successfully");
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
 module.exports = {
   applyLeave,
   getLeaveHistory,
   getLeaveById,
   updateLeave,
+  cancelLeave,
 };

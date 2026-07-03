@@ -113,9 +113,35 @@ const updateLeave = async (employeeId, leaveId, leaveData) => {
   return updatedLeave;
 };
 
+const cancelLeave = async (employeeId, leaveId) => {
+  const leave = await prisma.leaveRequest.findFirst({
+    where: {
+      id: Number(leaveId),
+      employeeId,
+    },
+  });
+
+  if (!leave) {
+    throw new Error("Leave request not found");
+  }
+
+  if (leave.status !== "PENDING") {
+    throw new Error("Only pending leave requests can be cancelled");
+  }
+
+  await prisma.leaveRequest.delete({
+    where: {
+      id: Number(leaveId),
+    },
+  });
+
+  return;
+};
+
 module.exports = {
   applyLeave,
   getLeaveHistory,
   getLeaveById,
   updateLeave,
+  cancelLeave,
 };

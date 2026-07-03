@@ -36,5 +36,11 @@ router.put(
   applyLeaveValidator,
   leaveController.updateLeave,
 );
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("EMPLOYEE"),
+  leaveController.cancelLeave,
+);
 
 module.exports = router;
