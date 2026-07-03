@@ -1,0 +1,566 @@
+{
+  "info": {
+    "_postman_id": "leave-management-system-api",
+    "name": "Leave Management System API",
+    "description": "Comprehensive API documentation for the Employee Leave Management System.\n\n## Base URL\n`http://localhost:5000/api`\n\n## Authentication\nAll protected endpoints require a Bearer token in the Authorization header:\n```\nAuthorization: Bearer <your_jwt_token>\n```\n\nThe token is obtained from the `/auth/login` endpoint.\n\n## Roles\n- **EMPLOYEE** - Can apply, view, update, and cancel their own leave requests\n- **MANAGER** - Can view team leaves and approve/reject them\n\n## Response Format\nAll responses follow this structure:\n```json\n{\n  \"success\": true | false,\n  \"message\": \"Human-readable message\",\n  \"data\": { ... } | null\n}\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "employee_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT token for employee. Set automatically after login."
+    },
+    {
+      "key": "manager_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT token for manager. Set automatically after login."
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints. No token required.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('employee_token', res.data.token);",
+                  "  console.log('Token saved to collection variable: employee_token');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"employee1@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticates a user and returns a JWT token along with user details.\n\n**No authentication required.**\n\n### Request Body\n| Field    | Type   | Required | Description            |\n|----------|--------|----------|------------------------|\n| email    | string | ✅       | Registered email address |\n| password | string | ✅       | Account password       |\n\n### Success Response (200)\n```json\n{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"user\": {\n      \"id\": 2,\n      \"employeeCode\": \"EMP001\",\n      \"name\": \"Employee One\",\n      \"email\": \"employee1@gmail.com\",\n      \"department\": \"IT\",\n      \"role\": \"EMPLOYEE\"\n    }\n  }\n}\n```\n\n### Error Responses\n| Status | Reason                          |\n|--------|---------------------------------|\n| 400    | Missing or invalid fields       |\n| 401    | Incorrect email or password     |\n| 500    | Internal server error           |"
+          },
+          "response": [
+            {
+              "name": "Login Success - Employee",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6IkVNUExPWUVFIiwiaWF0IjoxNzIwMDAwMDAwLCJleHAiOjE3MjA2MDQ4MDB9.abc123\",\n    \"user\": {\n      \"id\": 2,\n      \"employeeCode\": \"EMP001\",\n      \"name\": \"Employee One\",\n      \"email\": \"employee1@gmail.com\",\n      \"department\": \"IT\",\n      \"role\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            {
+              "name": "Login Success - Manager",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6Ik1BTkFHRVIiLCJpYXQiOjE3MjAwMDAwMDAsImV4cCI6MTcyMDYwNDgwMH0.xyz789\",\n    \"user\": {\n      \"id\": 1,\n      \"employeeCode\": \"MGR001\",\n      \"name\": \"Manager User\",\n      \"email\": \"manager@gmail.com\",\n      \"department\": \"Administration\",\n      \"role\": \"MANAGER\"\n    }\n  }\n}"
+            },
+            {
+              "name": "Invalid Credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid email or password\"\n}"
+            },
+            {
+              "name": "Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": [\n    {\n      \"field\": \"email\",\n      \"message\": \"Please provide a valid email address\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logs out the current user. The client is responsible for discarding the JWT token.\n\n**Authentication required.**\n\n### Success Response (200)\n```json\n{\n  \"success\": true,\n  \"message\": \"Logged out successfully\"\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Logout Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Logged out successfully\"\n}"
+            },
+            {
+              "name": "Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access denied. No token provided.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Employee",
+      "description": "Employee profile and dashboard endpoints.",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/employees/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "dashboard"]
+            },
+            "description": "Returns leave statistics and recent leave requests for the authenticated employee.\n\n**Authentication required. Role: EMPLOYEE**\n\n### Success Response (200)\n```json\n{\n  \"success\": true,\n  \"message\": \"Dashboard data fetched\",\n  \"data\": {\n    \"totalLeaves\": 5,\n    \"pendingLeaves\": 1,\n    \"approvedLeaves\": 3,\n    \"rejectedLeaves\": 1,\n    \"recentLeaves\": [ ... ]\n  }\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Dashboard Success",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Dashboard data fetched\",\n  \"data\": {\n    \"totalLeaves\": 5,\n    \"pendingLeaves\": 1,\n    \"approvedLeaves\": 3,\n    \"rejectedLeaves\": 1,\n    \"recentLeaves\": [\n      {\n        \"id\": 8,\n        \"leaveType\": \"CASUAL\",\n        \"startDate\": \"2026-07-10T00:00:00.000Z\",\n        \"endDate\": \"2026-07-12T00:00:00.000Z\",\n        \"status\": \"PENDING\",\n        \"reason\": \"Family function\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Employees",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/employees?search=John&department=IT&role=EMPLOYEE",
+              "host": ["{{base_url}}"],
+              "path": ["employees"],
+              "query": [
+                { "key": "search", "value": "John", "description": "Search by name or email (optional)" },
+                { "key": "department", "value": "IT", "description": "Filter by department (optional)" },
+                { "key": "role", "value": "EMPLOYEE", "description": "Filter by role: EMPLOYEE | MANAGER (optional)" }
+              ]
+            },
+            "description": "Returns a list of all employees. Supports optional filtering.\n\n**Authentication required. Role: ANY**\n\n### Query Parameters\n| Parameter  | Type   | Required | Description                       |\n|------------|--------|----------|-----------------------------------|\n| search     | string | ❌       | Search by name or email           |\n| department | string | ❌       | Filter by department              |\n| role       | string | ❌       | Filter by role (EMPLOYEE/MANAGER) |"
+          },
+          "response": [
+            {
+              "name": "Employees List",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Employees fetched successfully\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"employeeCode\": \"MGR001\",\n      \"name\": \"Manager User\",\n      \"email\": \"manager@gmail.com\",\n      \"department\": \"Administration\",\n      \"role\": \"MANAGER\"\n    },\n    {\n      \"id\": 2,\n      \"employeeCode\": \"EMP001\",\n      \"name\": \"Employee One\",\n      \"email\": \"employee1@gmail.com\",\n      \"department\": \"IT\",\n      \"role\": \"EMPLOYEE\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Employee By ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/employees/2",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "2"]
+            },
+            "description": "Returns a single employee's details by their ID.\n\n**Authentication required. Role: ANY**\n\n### Path Parameters\n| Parameter | Type    | Required | Description     |\n|-----------|---------|----------|-----------------|\n| id        | integer | ✅       | Employee ID     |"
+          },
+          "response": [
+            {
+              "name": "Employee Found",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Employee fetched successfully\",\n  \"data\": {\n    \"id\": 2,\n    \"employeeCode\": \"EMP001\",\n    \"name\": \"Employee One\",\n    \"email\": \"employee1@gmail.com\",\n    \"department\": \"IT\",\n    \"role\": \"EMPLOYEE\",\n    \"createdAt\": \"2026-07-01T10:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "Employee Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Employee not found\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Leave (Employee)",
+      "description": "Leave management endpoints for employees. All require EMPLOYEE role.",
+      "item": [
+        {
+          "name": "Apply for Leave",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leaveType\": \"CASUAL\",\n  \"startDate\": \"2026-07-15\",\n  \"endDate\": \"2026-07-17\",\n  \"reason\": \"Personal work and family function\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/leaves",
+              "host": ["{{base_url}}"],
+              "path": ["leaves"]
+            },
+            "description": "Submit a new leave request. The leave is created with `PENDING` status.\n\n**Authentication required. Role: EMPLOYEE**\n\n### Request Body\n| Field     | Type   | Required | Description                              |\n|-----------|--------|----------|------------------------------------------|\n| leaveType | enum   | ✅       | CASUAL \\| SICK \\| EARNED \\| WFH         |\n| startDate | string | ✅       | Start date in YYYY-MM-DD format          |\n| endDate   | string | ✅       | End date in YYYY-MM-DD format            |\n| reason    | string | ✅       | Reason for the leave request             |"
+          },
+          "response": [
+            {
+              "name": "Leave Applied Successfully",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave applied successfully\",\n  \"data\": {\n    \"id\": 10,\n    \"employeeId\": 2,\n    \"leaveType\": \"CASUAL\",\n    \"startDate\": \"2026-07-15T00:00:00.000Z\",\n    \"endDate\": \"2026-07-17T00:00:00.000Z\",\n    \"reason\": \"Personal work and family function\",\n    \"status\": \"PENDING\",\n    \"managerComments\": null,\n    \"createdAt\": \"2026-07-03T14:30:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": [\n    {\n      \"field\": \"leaveType\",\n      \"message\": \"Leave type must be one of: CASUAL, SICK, EARNED, WFH\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Forbidden - Wrong Role",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access denied. Insufficient permissions.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Leave History",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leaves?status=PENDING&leaveType=CASUAL&search=function",
+              "host": ["{{base_url}}"],
+              "path": ["leaves"],
+              "query": [
+                { "key": "status", "value": "PENDING", "description": "Filter by status: PENDING | APPROVED | REJECTED (optional)" },
+                { "key": "leaveType", "value": "CASUAL", "description": "Filter by type: CASUAL | SICK | EARNED | WFH (optional)" },
+                { "key": "search", "value": "function", "description": "Search in reason text (optional)" }
+              ]
+            },
+            "description": "Returns all leave requests for the authenticated employee with optional filters.\n\n**Authentication required. Role: EMPLOYEE**\n\n### Query Parameters\n| Parameter | Type   | Required | Description                               |\n|-----------|--------|----------|-------------------------------------------|\n| status    | enum   | ❌       | PENDING \\| APPROVED \\| REJECTED           |\n| leaveType | enum   | ❌       | CASUAL \\| SICK \\| EARNED \\| WFH           |\n| search    | string | ❌       | Keyword search within the reason field    |"
+          },
+          "response": [
+            {
+              "name": "Leave History",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave history fetched\",\n  \"data\": [\n    {\n      \"id\": 8,\n      \"leaveType\": \"CASUAL\",\n      \"startDate\": \"2026-07-10T00:00:00.000Z\",\n      \"endDate\": \"2026-07-12T00:00:00.000Z\",\n      \"reason\": \"Family function\",\n      \"status\": \"PENDING\",\n      \"managerComments\": null,\n      \"createdAt\": \"2026-07-02T09:00:00.000Z\"\n    },\n    {\n      \"id\": 5,\n      \"leaveType\": \"SICK\",\n      \"startDate\": \"2026-06-20T00:00:00.000Z\",\n      \"endDate\": \"2026-06-21T00:00:00.000Z\",\n      \"reason\": \"Fever and cold\",\n      \"status\": \"APPROVED\",\n      \"managerComments\": \"Get well soon\",\n      \"createdAt\": \"2026-06-19T08:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Empty History",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave history fetched\",\n  \"data\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Leave By ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leaves/8",
+              "host": ["{{base_url}}"],
+              "path": ["leaves", "8"]
+            },
+            "description": "Returns details of a specific leave request by its ID. Employees can only view their own leaves.\n\n**Authentication required. Role: EMPLOYEE**\n\n### Path Parameters\n| Parameter | Type    | Required | Description       |\n|-----------|---------|----------|-------------------|\n| id        | integer | ✅       | Leave Request ID  |"
+          },
+          "response": [
+            {
+              "name": "Leave Found",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave request fetched\",\n  \"data\": {\n    \"id\": 8,\n    \"leaveType\": \"CASUAL\",\n    \"startDate\": \"2026-07-10T00:00:00.000Z\",\n    \"endDate\": \"2026-07-12T00:00:00.000Z\",\n    \"reason\": \"Family function\",\n    \"status\": \"PENDING\",\n    \"managerComments\": null,\n    \"createdAt\": \"2026-07-02T09:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "Leave Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Leave request not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Leave Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leaveType\": \"EARNED\",\n  \"startDate\": \"2026-07-16\",\n  \"endDate\": \"2026-07-18\",\n  \"reason\": \"Updated: family function extended by one day\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/leaves/8",
+              "host": ["{{base_url}}"],
+              "path": ["leaves", "8"]
+            },
+            "description": "Updates an existing leave request. Only **PENDING** leaves can be updated.\n\n**Authentication required. Role: EMPLOYEE**\n\n### Path Parameters\n| Parameter | Type    | Required | Description       |\n|-----------|---------|----------|-------------------|\n| id        | integer | ✅       | Leave Request ID  |\n\n### Request Body\nSame fields as Apply for Leave — all fields required."
+          },
+          "response": [
+            {
+              "name": "Leave Updated",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave request updated successfully\",\n  \"data\": {\n    \"id\": 8,\n    \"leaveType\": \"EARNED\",\n    \"startDate\": \"2026-07-16T00:00:00.000Z\",\n    \"endDate\": \"2026-07-18T00:00:00.000Z\",\n    \"reason\": \"Updated: family function extended by one day\",\n    \"status\": \"PENDING\",\n    \"managerComments\": null\n  }\n}"
+            },
+            {
+              "name": "Cannot Update Approved Leave",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Only pending leave requests can be updated\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cancel Leave Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leaves/8",
+              "host": ["{{base_url}}"],
+              "path": ["leaves", "8"]
+            },
+            "description": "Cancels (deletes) a pending leave request. Only **PENDING** leaves can be cancelled.\n\n**Authentication required. Role: EMPLOYEE**\n\n### Path Parameters\n| Parameter | Type    | Required | Description       |\n|-----------|---------|----------|-------------------|\n| id        | integer | ✅       | Leave Request ID  |"
+          },
+          "response": [
+            {
+              "name": "Leave Cancelled",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave request cancelled successfully\"\n}"
+            },
+            {
+              "name": "Cannot Cancel Approved Leave",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Only pending leave requests can be cancelled\"\n}"
+            },
+            {
+              "name": "Leave Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Leave request not found\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Manager",
+      "description": "Manager-specific endpoints for team leave management. All require MANAGER role.",
+      "item": [
+        {
+          "name": "Get Manager Dashboard",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/manager/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["manager", "dashboard"]
+            },
+            "description": "Returns an overview of all team leave statistics for the manager.\n\n**Authentication required. Role: MANAGER**\n\n### Success Response (200)\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"totalEmployees\": 2,\n    \"pendingApprovals\": 3,\n    \"approvedRequests\": 10,\n    \"rejectedRequests\": 2,\n    \"recentActivities\": [ ... ]\n  }\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Manager Dashboard",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Manager dashboard fetched\",\n  \"data\": {\n    \"totalEmployees\": 2,\n    \"pendingApprovals\": 3,\n    \"approvedRequests\": 10,\n    \"rejectedRequests\": 2,\n    \"recentActivities\": [\n      {\n        \"id\": 9,\n        \"leaveType\": \"SICK\",\n        \"startDate\": \"2026-07-05T00:00:00.000Z\",\n        \"endDate\": \"2026-07-06T00:00:00.000Z\",\n        \"status\": \"PENDING\",\n        \"employee\": {\n          \"id\": 3,\n          \"name\": \"Employee Two\",\n          \"department\": \"HR\"\n        }\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "Forbidden - Not Manager",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access denied. Insufficient permissions.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Pending Leaves",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/manager/pending-leaves",
+              "host": ["{{base_url}}"],
+              "path": ["manager", "pending-leaves"]
+            },
+            "description": "Returns all leave requests with `PENDING` status across all employees.\n\n**Authentication required. Role: MANAGER**"
+          },
+          "response": [
+            {
+              "name": "Pending Leaves List",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Pending leaves fetched\",\n  \"data\": [\n    {\n      \"id\": 8,\n      \"leaveType\": \"CASUAL\",\n      \"startDate\": \"2026-07-10T00:00:00.000Z\",\n      \"endDate\": \"2026-07-12T00:00:00.000Z\",\n      \"reason\": \"Family function\",\n      \"status\": \"PENDING\",\n      \"managerComments\": null,\n      \"employee\": {\n        \"id\": 2,\n        \"name\": \"Employee One\",\n        \"employeeCode\": \"EMP001\",\n        \"department\": \"IT\",\n        \"email\": \"employee1@gmail.com\"\n      }\n    }\n  ]\n}"
+            },
+            {
+              "name": "No Pending Leaves",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Pending leaves fetched\",\n  \"data\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Approve Leave",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/manager/leaves/8/approve",
+              "host": ["{{base_url}}"],
+              "path": ["manager", "leaves", "8", "approve"]
+            },
+            "description": "Approves a pending leave request. Changes status from `PENDING` to `APPROVED`.\n\n**Authentication required. Role: MANAGER**\n\n### Path Parameters\n| Parameter | Type    | Required | Description       |\n|-----------|---------|----------|-------------------|\n| id        | integer | ✅       | Leave Request ID  |\n\n### Request Body\nNo body required."
+          },
+          "response": [
+            {
+              "name": "Leave Approved",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave approved successfully\",\n  \"data\": {\n    \"id\": 8,\n    \"status\": \"APPROVED\",\n    \"leaveType\": \"CASUAL\",\n    \"startDate\": \"2026-07-10T00:00:00.000Z\",\n    \"endDate\": \"2026-07-12T00:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "Already Processed",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Leave request is not in pending state\"\n}"
+            },
+            {
+              "name": "Leave Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Leave request not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reject Leave",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"managerComments\": \"Project deadline approaching, please reschedule after July 25th\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/manager/leaves/8/reject",
+              "host": ["{{base_url}}"],
+              "path": ["manager", "leaves", "8", "reject"]
+            },
+            "description": "Rejects a pending leave request with an optional manager comment. Changes status from `PENDING` to `REJECTED`.\n\n**Authentication required. Role: MANAGER**\n\n### Path Parameters\n| Parameter | Type    | Required | Description       |\n|-----------|---------|----------|-------------------|\n| id        | integer | ✅       | Leave Request ID  |\n\n### Request Body\n| Field           | Type   | Required | Description                   |\n|-----------------|--------|----------|-------------------------------|\n| managerComments | string | ❌       | Reason for rejection          |"
+          },
+          "response": [
+            {
+              "name": "Leave Rejected",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Leave rejected successfully\",\n  \"data\": {\n    \"id\": 8,\n    \"status\": \"REJECTED\",\n    \"leaveType\": \"CASUAL\",\n    \"startDate\": \"2026-07-10T00:00:00.000Z\",\n    \"endDate\": \"2026-07-12T00:00:00.000Z\",\n    \"managerComments\": \"Project deadline approaching, please reschedule after July 25th\"\n  }\n}"
+            },
+            {
+              "name": "Already Processed",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Leave request is not in pending state\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
