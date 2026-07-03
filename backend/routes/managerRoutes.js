@@ -10,7 +10,21 @@ router.get(
   "/dashboard",
   authenticate,
   authorize("MANAGER"),
-  managerController.getDashboard
+  managerController.getDashboard,
+);
+
+router.get(
+  "/pending-leaves",
+  authenticate,
+  authorize("MANAGER"),
+  managerController.getPendingLeaves,
+);
+
+router.put(
+  "/leaves/:id/approve",
+  authenticate,
+  authorize("MANAGER"),
+  managerController.approveLeave,
 );
 
 module.exports = router;

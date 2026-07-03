@@ -50,6 +50,60 @@ const getDashboard = async () => {
   };
 };
 
+const getPendingLeaves = async () => {
+  const pendingLeaves = await prisma.leaveRequest.findMany({
+    where: {
+      status: "PENDING",
+    },
+    include: {
+      employee: {
+        select: {
+          id: true,
+          employeeCode: true,
+          name: true,
+          email: true,
+          department: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return pendingLeaves;
+};
+
+const approveLeave = async (leaveId) => {
+  const leave = await prisma.leaveRequest.findUnique({
+    where: {
+      id: Number(leaveId),
+    },
+  });
+
+  if (!leave) {
+    throw new Error("Leave request not found");
+  }
+
+  if (leave.status !== "PENDING") {
+    throw new Error("Leave request has already been processed");
+  }
+
+  const updatedLeave = await prisma.leaveRequest.update({
+    where: {
+      id: Number(leaveId),
+    },
+    data: {
+      status: "APPROVED",
+      managerComments: "Approved",
+    },
+  });
+
+  return updatedLeave;
+};
+
 module.exports = {
   getDashboard,
+  getPendingLeaves,
+  approveLeave,
 };
